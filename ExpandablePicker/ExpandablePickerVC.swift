@@ -8,6 +8,7 @@
 
 import UIKit
 
+
 class ExpandablePickerVC: UITableViewController, ExpandablePickerCellDelegate {
     
     let kInfoPickerTag = 99   // view tag identifiying the date picker view
@@ -18,12 +19,17 @@ class ExpandablePickerVC: UITableViewController, ExpandablePickerCellDelegate {
     let kInfoCellID       = "infoCell";       // the cells with the start or end date
     let kInfoPickerCellID = "infoPickerCell"; // the cell containing the date picker
     
-    var dataArray: [[String: AnyObject]] = []
 
     // keep track which indexPath points to the cell with UIDatePicker
     var datePickerIndexPath: NSIndexPath?
     var pickerCellRowHeight: CGFloat = 216
     
+    var apiDict = [String : [String: Any]]()
+    
+
+    
+    private var dataArray: [[String: AnyObject]] = []
+
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -31,10 +37,19 @@ class ExpandablePickerVC: UITableViewController, ExpandablePickerCellDelegate {
         setTableViewUI()
 
         // setup our data source
+        
         let item1 = [kTitleKey : "Prvi", kPickerItemsKey : ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5", "Item 6"]] as [String : Any]
         let item2 = [kTitleKey : "Drugi", kPickerItemsKey : ["1", "2", "3", "4", "5", "6"]] as [String : Any]
+        let item3 = [kTitleKey : "Treci", kPickerItemsKey : ["3-1", "3-2", "3-3", "3-4", "3-5", "3-6"]] as [String : Any]
         
-        dataArray = [item1 as Dictionary<String, AnyObject>, item2 as Dictionary<String, AnyObject>]
+        apiDict["1"] = item1
+        apiDict["2"] = item2
+        apiDict["3"] = item3
+        
+        for (key, element) in apiDict {
+            print(key)
+            dataArray.append(element as Dictionary<String, AnyObject>)
+        }
     }
     
     private func setTableViewUI() {
