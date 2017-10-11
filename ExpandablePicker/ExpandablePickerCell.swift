@@ -19,7 +19,7 @@ class ExpandablePickerCell: UITableViewCell, UIPickerViewDelegate, UIPickerViewD
     var delegate: ExpandablePickerCellDelegate?
 
     
-    let pickerViewTitles = ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5", "Item 6"]
+    var pickerViewTitles = [String]()
 
     override func awakeFromNib() {
         super.awakeFromNib()

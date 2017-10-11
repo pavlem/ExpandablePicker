@@ -13,40 +13,36 @@ class ExpandablePickerVC: UITableViewController, ExpandablePickerCellDelegate {
     let kInfoPickerTag = 99   // view tag identifiying the date picker view
     
     let kTitleKey = "title" // key for obtaining the data source item's title
-    let kDateKey  = "date"  // key for obtaining the data source item's date value
+    let kPickerItemsKey  = "pickerItems"  // key for obtaining the data source item's date value
     
     let kInfoCellID       = "infoCell";       // the cells with the start or end date
     let kInfoPickerCellID = "infoPickerCell"; // the cell containing the date picker
     
     var dataArray: [[String: AnyObject]] = []
 
-    
     // keep track which indexPath points to the cell with UIDatePicker
     var datePickerIndexPath: NSIndexPath?
     var pickerCellRowHeight: CGFloat = 216
     
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        setTableViewUI()
+
+        // setup our data source
+        let item1 = [kTitleKey : "Prvi", kPickerItemsKey : ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5", "Item 6"]] as [String : Any]
+        let item2 = [kTitleKey : "Drugi", kPickerItemsKey : ["1", "2", "3", "4", "5", "6"]] as [String : Any]
         
+        dataArray = [item1 as Dictionary<String, AnyObject>, item2 as Dictionary<String, AnyObject>]
+    }
+    
+    private func setTableViewUI() {
         tableView.tableFooterView = UIView(frame: CGRect.zero)
         tableView.tableFooterView!.isHidden = true
         tableView.backgroundColor = UIColor.lightGray
-        
-        
-        // setup our data source
-        let itemTwo = [kTitleKey : "Start Date", kDateKey : NSDate()] as [String : Any]
-        let itemThree = [kTitleKey : "End Date", kDateKey : NSDate()] as [String : Any]
-        
-        dataArray = [itemTwo as Dictionary<String, AnyObject>, itemThree as Dictionary<String, AnyObject>]
-        
-       
     }
 
- 
-    
-    
     func hasPickerForIndexPath(indexPath: NSIndexPath) -> Bool {
         var hasDatePicker = false
         
@@ -65,7 +61,7 @@ class ExpandablePickerVC: UITableViewController, ExpandablePickerCellDelegate {
             let associatedDatePickerCell = tableView.cellForRow(at: indexPath as IndexPath)
             if let targetedDatePicker = associatedDatePickerCell?.viewWithTag(kInfoPickerTag) as! UIDatePicker? {
                 let itemData = dataArray[self.datePickerIndexPath!.row - 1]
-                targetedDatePicker.setDate((itemData[kDateKey] as! NSDate) as Date, animated: false)
+                targetedDatePicker.setDate((itemData[kPickerItemsKey] as! NSDate) as Date, animated: false)
             }
         }
     }
@@ -124,11 +120,6 @@ class ExpandablePickerVC: UITableViewController, ExpandablePickerCellDelegate {
         
         cell = tableView.dequeueReusableCell(withIdentifier: cellID)
         
-        if cellID == kInfoPickerCellID {
-            let pickerCell = cell as! ExpandablePickerCell
-            pickerCell.delegate = self
-        }
-        
         var modelRow = indexPath.row
         if (datePickerIndexPath != nil && (datePickerIndexPath?.row)! <= indexPath.row) {
             modelRow -= 1
@@ -136,22 +127,26 @@ class ExpandablePickerVC: UITableViewController, ExpandablePickerCellDelegate {
         
         let itemData = dataArray[modelRow]
         
+        if cellID == kInfoPickerCellID {
+            let pickerCell = cell as! ExpandablePickerCell
+            pickerCell.pickerViewTitles = itemData[kPickerItemsKey] as! [String]
+            pickerCell.delegate = self
+            pickerCell.picker.reloadAllComponents()
+
+        }
+        
         if cellID == kInfoCellID {
             // we have either start or end date cells, populate their date field
-            //
             cell?.textLabel?.text = itemData[kTitleKey] as? String
-//            cell?.detailTextLabel?.text = self.dateFormatter.string(from: (itemData[kDateKey] as! NSDate) as Date)
+            
+            if let arr = itemData[kPickerItemsKey] as? [String] {
+                cell?.detailTextLabel?.text = arr.first
+            }
         }
         
         return cell!
     }
     
-    
-    //MARK: - Exp Cell Delegate
-    func selectedPickerItem(_ selectedItem: String) {
-        print("PAJA")
-        print(selectedItem)
-    }
     
     /*! Adds or removes a UIDatePicker cell below the given indexPath.
      @param indexPath The indexPath to reveal the UIDatePicker.
@@ -223,5 +218,10 @@ class ExpandablePickerVC: UITableViewController, ExpandablePickerCellDelegate {
         } else {
             tableView.deselectRow(at: indexPath as IndexPath, animated: true)
         }
+    }
+    
+    //MARK: - Exp Cell Delegate
+    func selectedPickerItem(_ selectedItem: String) {
+        print(selectedItem)
     }
 }
