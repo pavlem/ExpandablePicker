@@ -23,41 +23,36 @@ class ExpandablePickerVC: UITableViewController, ExpandablePickerCellDelegate {
     // keep track which indexPath points to the cell with UIDatePicker
     var datePickerIndexPath: NSIndexPath?
     var pickerCellRowHeight: CGFloat = 216
-    
-    var apiDict = [String : [String: Any]]()
-    
-
-    
-    private var dataArray: [[String: AnyObject]] = []
+    var dataArray: [[String: AnyObject]] = []
 
 
+    //MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         
         setTableViewUI()
 
         // setup our data source
-        
         let item1 = [kTitleKey : "Prvi", kPickerItemsKey : ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5", "Item 6"]] as [String : Any]
         let item2 = [kTitleKey : "Drugi", kPickerItemsKey : ["1", "2", "3", "4", "5", "6"]] as [String : Any]
         let item3 = [kTitleKey : "Treci", kPickerItemsKey : ["3-1", "3-2", "3-3", "3-4", "3-5", "3-6"]] as [String : Any]
         
-        apiDict["1"] = item1
-        apiDict["2"] = item2
-        apiDict["3"] = item3
-        
-        for (key, element) in apiDict {
-            print(key)
-            dataArray.append(element as Dictionary<String, AnyObject>)
+        if dataArray.count == 0 {
+            dataArray = [item1 as Dictionary<String, AnyObject>,
+                         item2 as Dictionary<String, AnyObject>,
+                         item3 as Dictionary<String, AnyObject>]
         }
     }
     
+    //MARK: - UI
     private func setTableViewUI() {
         tableView.tableFooterView = UIView(frame: CGRect.zero)
         tableView.tableFooterView!.isHidden = true
         tableView.backgroundColor = UIColor.lightGray
     }
 
+    
+    //MARK: - Helper
     func hasPickerForIndexPath(indexPath: NSIndexPath) -> Bool {
         var hasDatePicker = false
         
@@ -147,7 +142,7 @@ class ExpandablePickerVC: UITableViewController, ExpandablePickerCellDelegate {
             pickerCell.pickerViewTitles = itemData[kPickerItemsKey] as! [String]
             pickerCell.delegate = self
             pickerCell.picker.reloadAllComponents()
-
+            pickerCell.picker.selectRow(2, inComponent:0, animated:false)
         }
         
         if cellID == kInfoCellID {
