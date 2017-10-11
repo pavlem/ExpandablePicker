@@ -24,7 +24,7 @@ class ExpandablePickerVC: UITableViewController, ExpandablePickerCellDelegate {
     var datePickerIndexPath: NSIndexPath?
     var pickerCellRowHeight: CGFloat = 216
     var dataArray: [[String: AnyObject]] = []
-
+    var defaultPickerValues = [String]()
 
     //MARK: - Lifecycle
     override func viewDidLoad() {
@@ -42,6 +42,8 @@ class ExpandablePickerVC: UITableViewController, ExpandablePickerCellDelegate {
                          item2 as Dictionary<String, AnyObject>,
                          item3 as Dictionary<String, AnyObject>]
         }
+        
+        defaultPickerValues = ["Item 3", "2", "3-7"]
     }
     
     //MARK: - UI
@@ -142,7 +144,14 @@ class ExpandablePickerVC: UITableViewController, ExpandablePickerCellDelegate {
             pickerCell.pickerViewTitles = itemData[kPickerItemsKey] as! [String]
             pickerCell.delegate = self
             pickerCell.picker.reloadAllComponents()
-            pickerCell.picker.selectRow(2, inComponent:0, animated:false)
+            
+            if let index = pickerCell.pickerViewTitles.index(of: defaultPickerValues[modelRow]) {
+                print(index)
+                pickerCell.picker.selectRow(index, inComponent:0, animated:false)
+
+            } else {
+                pickerCell.picker.selectRow(0, inComponent:0, animated:false)
+            }       
         }
         
         if cellID == kInfoCellID {
