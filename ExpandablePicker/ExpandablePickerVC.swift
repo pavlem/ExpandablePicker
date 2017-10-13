@@ -8,54 +8,88 @@
 
 import UIKit
 
+protocol ExpandablePickerVCDelegate: class {
+    func pickerToggle(pickerCellHeight: CGFloat, titleCellHeight: CGFloat, isPickerOpen: Bool, isSameTitleCellTapped: Bool, toggleDuration: Double)
+    func selectedPickerItem(_ selectedItem: String)
+}
 
 class ExpandablePickerVC: UITableViewController, ExpandablePickerCellDelegate {
     
-    let kInfoPickerTag = 99   // view tag identifiying the date picker view
+    weak var delegate: ExpandablePickerVCDelegate?
     
+    fileprivate var lastTappedTitleCell: UITableViewCell?
+    
+    let kInfoPickerTag = 99   // view tag identifiying the date picker view
     let kTitleKey = "title" // key for obtaining the data source item's title
     let kPickerItemsKey  = "pickerItems"  // key for obtaining the data source item's date value
-    
     let kInfoCellID       = "infoCell";       // the cells with the start or end date
     let kInfoPickerCellID = "infoPickerCell"; // the cell containing the date picker
     
-
     // keep track which indexPath points to the cell with UIDatePicker
     var datePickerIndexPath: NSIndexPath?
-    var pickerCellRowHeight: CGFloat = 216
+    
+    let pickerCellRowHeight: CGFloat = 170
+    let titleCellRowHeight: CGFloat = 60
+    
+    let togleAnimationDuration = Double(0.25)
+    
     var dataArray: [[String: AnyObject]] = []
-    var defaultPickerValues = [String]()
-
+    var selectedPickerValues = [String]()
+    
+    
+    //MARK: - API
+    func closeOpenedCell() {
+        guard datePickerIndexPath != nil else { //Checks if Picker is expanded
+            return
+        }
+        
+        if let cell = lastTappedTitleCell {
+            tap(cell: cell)
+        }
+    }
+    
+    
     //MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         
         setTableViewUI()
-
-        // setup our data source
-        let item1 = [kTitleKey : "Prvi", kPickerItemsKey : ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5", "Item 6"]] as [String : Any]
-        let item2 = [kTitleKey : "Drugi", kPickerItemsKey : ["1", "2", "3", "4", "5", "6"]] as [String : Any]
-        let item3 = [kTitleKey : "Treci", kPickerItemsKey : ["3-1", "3-2", "3-3", "3-4", "3-5", "3-6"]] as [String : Any]
+        setDefaultDataSourceValues()
+    }
+    
+    fileprivate func tap(cell: UITableViewCell) {
         
+        if let rowToSelect = tableView.indexPath(for: cell) {
+            tableView.selectRow(at: rowToSelect, animated: true, scrollPosition: .none)
+            tableView(tableView, didSelectRowAt: rowToSelect)
+        }
+    }
+    
+    //MARK: - UI
+    fileprivate func setTableViewUI() {
+        tableView.tableFooterView = UIView(frame: CGRect.zero)
+        tableView.tableFooterView!.isHidden = true
+        tableView.backgroundColor = UIColor.lightGray
+    }
+    
+    //MARK: - Helper
+    fileprivate func setDefaultDataSourceValues() {
         if dataArray.count == 0 {
+            let item1 = [kTitleKey : "First", kPickerItemsKey : ["One", "Two", "Three", "Four", "Five", "Six"]] as [String : Any]
+            let item2 = [kTitleKey : "Second", kPickerItemsKey : ["2-1", "2-2", "2-3", "2-4", "2-5", "2-6", "2-7"]] as [String : Any]
+            let item3 = [kTitleKey : "Third", kPickerItemsKey : ["3-1", "3-2", "3-3", "3-4", "3-5", "3-6", "3-7"]] as [String : Any]
+            
             dataArray = [item1 as Dictionary<String, AnyObject>,
                          item2 as Dictionary<String, AnyObject>,
                          item3 as Dictionary<String, AnyObject>]
         }
         
-        defaultPickerValues = ["Item 3", "2", "3-7"]
+        selectedPickerValues = ["Three", "2-7", "3-3"]
     }
     
-    //MARK: - UI
-    private func setTableViewUI() {
-        tableView.tableFooterView = UIView(frame: CGRect.zero)
-        tableView.tableFooterView!.isHidden = true
-        tableView.backgroundColor = UIColor.lightGray
-    }
-
     
-    //MARK: - Helper
-    func hasPickerForIndexPath(indexPath: NSIndexPath) -> Bool {
+    //MARK: - Picker Helper
+    fileprivate func hasPickerForIndexPath(indexPath: NSIndexPath) -> Bool {
         var hasDatePicker = false
         
         let targetedRow = indexPath.row + 1
@@ -68,7 +102,7 @@ class ExpandablePickerVC: UITableViewController, ExpandablePickerCellDelegate {
     
     /*! Updates the UIDatePicker's value to match with the date of the cell above it.
      */
-    func updateDatePicker() {
+    fileprivate func updateDatePicker() {
         if let indexPath = datePickerIndexPath {
             let associatedDatePickerCell = tableView.cellForRow(at: indexPath as IndexPath)
             if let targetedDatePicker = associatedDatePickerCell?.viewWithTag(kInfoPickerTag) as! UIDatePicker? {
@@ -80,30 +114,28 @@ class ExpandablePickerVC: UITableViewController, ExpandablePickerCellDelegate {
     
     /*! Determines if the UITableViewController has a UIDatePicker in any of its cells.
      */
-    func hasInlineDatePicker() -> Bool {
+    fileprivate func hasInlineDatePicker() -> Bool {
         return datePickerIndexPath != nil
     }
     
     /*! Determines if the given indexPath points to a cell that contains the UIDatePicker.
-     
      @param indexPath The indexPath to check if it represents a cell with the UIDatePicker.
      */
-    func indexPathHasPicker(indexPath: NSIndexPath) -> Bool {
+    fileprivate func indexPathHasPicker(indexPath: NSIndexPath) -> Bool {
         return hasInlineDatePicker() && datePickerIndexPath?.row == indexPath.row
     }
     
     /*! Determines if the given indexPath points to a cell that contains the start/end dates.
-     
      @param indexPath The indexPath to check if it represents start/end date cell.
      */
-    func indexPathHasDate(indexPath: NSIndexPath) -> Bool {
+    fileprivate func indexPathHasDate(indexPath: NSIndexPath) -> Bool {
         return true
     }
     
     
     // MARK: - Table view data source
     override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return (indexPathHasPicker(indexPath: indexPath as NSIndexPath) ? pickerCellRowHeight : tableView.rowHeight)
+        return (indexPathHasPicker(indexPath: indexPath as NSIndexPath) ? pickerCellRowHeight : titleCellRowHeight)
     }
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -119,7 +151,6 @@ class ExpandablePickerVC: UITableViewController, ExpandablePickerCellDelegate {
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         var cell: UITableViewCell?
-        
         var cellID = String()
         
         if indexPathHasPicker(indexPath: indexPath as NSIndexPath) {
@@ -145,22 +176,18 @@ class ExpandablePickerVC: UITableViewController, ExpandablePickerCellDelegate {
             pickerCell.delegate = self
             pickerCell.picker.reloadAllComponents()
             
-            if let index = pickerCell.pickerViewTitles.index(of: defaultPickerValues[modelRow]) {
-                print(index)
+            if let index = pickerCell.pickerViewTitles.index(of: selectedPickerValues[modelRow]) {
                 pickerCell.picker.selectRow(index, inComponent:0, animated:false)
-
+                
             } else {
                 pickerCell.picker.selectRow(0, inComponent:0, animated:false)
-            }       
+            }
         }
         
         if cellID == kInfoCellID {
             // we have either start or end date cells, populate their date field
             cell?.textLabel?.text = itemData[kTitleKey] as? String
-            
-            if let arr = itemData[kPickerItemsKey] as? [String] {
-                cell?.detailTextLabel?.text = arr.first
-            }
+            cell?.detailTextLabel?.text = selectedPickerValues[modelRow]
         }
         
         return cell!
@@ -232,6 +259,11 @@ class ExpandablePickerVC: UITableViewController, ExpandablePickerCellDelegate {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
         let cell = tableView.cellForRow(at: indexPath as IndexPath)
+        
+        delegate?.pickerToggle(pickerCellHeight: pickerCellRowHeight, titleCellHeight: titleCellRowHeight, isPickerOpen: hasInlineDatePicker(), isSameTitleCellTapped: lastTappedTitleCell == cell ? true : false, toggleDuration: togleAnimationDuration)
+        
+        lastTappedTitleCell = cell!
+        
         if cell?.reuseIdentifier == kInfoCellID {
             displayInlineDatePickerForRowAtIndexPath(indexPath: indexPath as NSIndexPath)
         } else {
@@ -239,8 +271,17 @@ class ExpandablePickerVC: UITableViewController, ExpandablePickerCellDelegate {
         }
     }
     
-    //MARK: - Exp Cell Delegate
-    func selectedPickerItem(_ selectedItem: String) {
+    //MARK: - Expandable Picker Cell Delegate
+    func selectedPickerItem(_ selectedItem: String, sender: UIPickerView) {
         print(selectedItem)
+        
+        let targetedCellIndexPath = IndexPath(row: datePickerIndexPath!.row - 1, section: 0) as NSIndexPath
+        let cell = tableView.cellForRow(at: targetedCellIndexPath as IndexPath)
+        
+        selectedPickerValues[targetedCellIndexPath.row] = selectedItem
+        cell?.detailTextLabel?.text = selectedItem
+        
+        delegate?.selectedPickerItem(selectedItem)
     }
 }
+

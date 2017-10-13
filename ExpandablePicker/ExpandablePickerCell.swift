@@ -9,18 +9,18 @@
 import UIKit
 
 protocol ExpandablePickerCellDelegate {
-    func selectedPickerItem(_ selectedItem: String)
+    func selectedPickerItem(_ selectedItem: String, sender: UIPickerView)
 }
 
 class ExpandablePickerCell: UITableViewCell, UIPickerViewDelegate, UIPickerViewDataSource {
-
+    
     @IBOutlet weak var picker: UIPickerView!
     
     var delegate: ExpandablePickerCellDelegate?
-
+    
     
     var pickerViewTitles = [String]()
-
+    
     override func awakeFromNib() {
         super.awakeFromNib()
         
@@ -28,10 +28,10 @@ class ExpandablePickerCell: UITableViewCell, UIPickerViewDelegate, UIPickerViewD
         picker.dataSource = self
         // Initialization code
     }
-
+    
     override func setSelected(_ selected: Bool, animated: Bool) {
         super.setSelected(selected, animated: animated)
-
+        
         // Configure the view for the selected state
     }
     
@@ -51,8 +51,9 @@ class ExpandablePickerCell: UITableViewCell, UIPickerViewDelegate, UIPickerViewD
     
     func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
         print(pickerViewTitles[row])
-        delegate?.selectedPickerItem(pickerViewTitles[row])
-        //TODO: Delegate back to vc
+        
+        delegate?.selectedPickerItem(pickerViewTitles[row], sender: pickerView)
+        
     }
-
+    
 }
