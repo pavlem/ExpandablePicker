@@ -17,7 +17,7 @@ class ExpandablePickerVC: UITableViewController, ExpandablePickerCellDelegate {
     
     weak var delegate: ExpandablePickerVCDelegate?
     
-    fileprivate var lastTappedTitleCell: UITableViewCell?
+    fileprivate var lastTappedTitleCell: ExpandablePickerTitleCell?
     
     let kInfoPickerTag = 99   // view tag identifiying the date picker view
     let kTitleKey = "title" // key for obtaining the data source item's title
@@ -185,9 +185,12 @@ class ExpandablePickerVC: UITableViewController, ExpandablePickerCellDelegate {
         }
         
         if cellID == kInfoCellID {
+            
+            let pickerTitleCell = cell as! ExpandablePickerTitleCell
+
             // we have either start or end date cells, populate their date field
-            cell?.textLabel?.text = itemData[kTitleKey] as? String
-            cell?.detailTextLabel?.text = selectedPickerValues[modelRow]
+            pickerTitleCell.title.text = itemData[kTitleKey] as? String
+            pickerTitleCell.detail.text = selectedPickerValues[modelRow]
         }
         
         return cell!
@@ -230,20 +233,31 @@ class ExpandablePickerVC: UITableViewController, ExpandablePickerCellDelegate {
         
         let sameCellClicked = (datePickerIndexPath?.row == indexPath.row + 1)
         
+
         // remove any date picker cell if it exists
         if self.hasInlineDatePicker() {
-            
             tableView.deleteRows(at: [IndexPath(row: datePickerIndexPath!.row, section: 0)], with: .fade)
             datePickerIndexPath = nil
         }
         
+        let cell = tableView.cellForRow(at: indexPath as IndexPath) as! ExpandablePickerTitleCell
+        
         if !sameCellClicked {
+            
+            print("diffCellClicked")
+
             // hide the old date picker and display the new one
             let rowToReveal = (before ? indexPath.row - 1 : indexPath.row)
             let indexPathToReveal =  IndexPath(row: rowToReveal, section: 0)
             
             toggleDatePickerForSelectedIndexPath(indexPath: indexPathToReveal as NSIndexPath)
             datePickerIndexPath = IndexPath(row: indexPathToReveal.row + 1, section: 0) as NSIndexPath
+            
+            cell.toggleDisclosure(true)
+            
+        } else {
+            print("sameCellClicked")
+            cell.toggleDisclosure(false)
         }
         
         // always deselect the row containing the start or end date
@@ -258,14 +272,23 @@ class ExpandablePickerVC: UITableViewController, ExpandablePickerCellDelegate {
     // MARK: - UITableViewDelegate
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
-        let cell = tableView.cellForRow(at: indexPath as IndexPath)
+        let cell = tableView.cellForRow(at: indexPath as IndexPath) as? ExpandablePickerTitleCell
         
         delegate?.pickerToggle(pickerCellHeight: pickerCellRowHeight, titleCellHeight: titleCellRowHeight, isPickerOpen: hasInlineDatePicker(), isSameTitleCellTapped: lastTappedTitleCell == cell ? true : false, toggleDuration: togleAnimationDuration)
         
-        lastTappedTitleCell = cell!
+        if lastTappedTitleCell != cell {
+            lastTappedTitleCell?.toggleDisclosure(false)
+        }
         
+        lastTappedTitleCell = cell
+
         if cell?.reuseIdentifier == kInfoCellID {
+            
+            
+            
             displayInlineDatePickerForRowAtIndexPath(indexPath: indexPath as NSIndexPath)
+            
+            
         } else {
             tableView.deselectRow(at: indexPath as IndexPath, animated: true)
         }
@@ -276,12 +299,10 @@ class ExpandablePickerVC: UITableViewController, ExpandablePickerCellDelegate {
         print(selectedItem)
         
         let targetedCellIndexPath = IndexPath(row: datePickerIndexPath!.row - 1, section: 0) as NSIndexPath
-        let cell = tableView.cellForRow(at: targetedCellIndexPath as IndexPath)
+        let cell = tableView.cellForRow(at: targetedCellIndexPath as IndexPath) as! ExpandablePickerTitleCell
         
         selectedPickerValues[targetedCellIndexPath.row] = selectedItem
-        cell?.detailTextLabel?.text = selectedItem
-        
+        cell.detail.text = selectedItem
         delegate?.selectedPickerItem(selectedItem)
     }
 }
-
